@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using hypercube;
 using UnityEngine;
@@ -32,6 +33,19 @@ public class FlipMaster : MonoBehaviour
     //this range will have to adjust based on how many slices there are in newer machines
     [Range(0, 9)] public int currentSlice;
 
+    //Controls
+    public enum FlipControls
+    {
+        General,
+        Palette
+    }
+    public FlipControls flipControls;
+    public KeyCode changeSliceForward = KeyCode.RightBracket;
+    public KeyCode changeSliceBack = KeyCode.LeftBracket;
+
+    //Hacky mapping correction
+    float correctionRatio = 0.8f;
+
     // Use this for initialization
     void Start()
     {
@@ -43,7 +57,13 @@ public class FlipMaster : MonoBehaviour
 
     void Update()
     {
-
+        if (flipControls == FlipControls.General)
+        {
+            if (Input.GetKeyDown(changeSliceForward))
+                ChangeSlice(-1);
+            if (Input.GetKeyDown(changeSliceBack))
+                ChangeSlice(1);
+        }
     }
 
     public void NewFlipbook()
@@ -66,6 +86,8 @@ public class FlipMaster : MonoBehaviour
             transform.localScale = transform.localScale.SetX(hypercube.transform.localScale.x);
             transform.localScale = transform.localScale.SetY(transform.localScale.x / panelRatio);
         }
+
+        transform.localScale = transform.localScale.SetX(transform.localScale.x * correctionRatio);
 
         #endregion
 
@@ -117,7 +139,11 @@ public class FlipMaster : MonoBehaviour
             transform = fpGameObject.transform,
             mf = fpGameObject.GetComponent<MeshFilter>(),
             mr = fpGameObject.GetComponent<MeshRenderer>(),
-            tex = new Texture2D(panelWidth, panelHeight)
+            tex = new Texture2D(panelWidth, panelHeight, TextureFormat.ARGB32, false, false)
+            {
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Clamp
+            }
         };
         var colors = new Color[flipPanel.tex.width * flipPanel.tex.height];
         for (int i = 0; i < colors.Length; i++)
@@ -129,5 +155,14 @@ public class FlipMaster : MonoBehaviour
         flipPanel.mr.material.mainTexture = flipPanel.tex;
 
         return flipPanel;
+    }
+
+    void ChangeSlice(int i)
+    {
+        currentSlice += i;
+        if (currentSlice > castmesh.slices - 1)
+            currentSlice = 0;
+        if (currentSlice < 0)
+            currentSlice = castmesh.slices - 1;
     }
 }
