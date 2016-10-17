@@ -22,35 +22,46 @@ public class FlipSlice
 
 public class FlipMaster : MonoBehaviour
 {
+    #region fields
     public GameObject flipSlicePrefab;
     public GameObject flipPanelPrefab;
-    [Range(2, 1024)] public int panelWidth = 256;
-    [Range(2, 1024)] public int panelHeight = 128;
+    [Range(2, 1024)]
+    public int panelWidth = 256;
+    [Range(2, 1024)]
+    public int panelHeight = 128;
     hypercubeCamera hypercube;
     castMesh castmesh;
     public List<FlipSlice> flipSlices;
     List<List<int>> timetable;
     //this range will have to adjust based on how many slices there are in newer machines
-    [Range(0, 9)] public int currentSlice;
+    [Range(0, 9)]
+    public int currentSlice;
+    public int currentFrame;
+    //is hardcoded for now
+    int flipSliceCount = 10;
 
     //Controls
     public enum FlipControls
     {
         General,
-        Palette
+        Palette,
+        Play
     }
     public FlipControls flipControls;
     public KeyCode changeSliceForward = KeyCode.RightBracket;
     public KeyCode changeSliceBack = KeyCode.LeftBracket;
+    Palette palette;
 
     //Hacky mapping correction
     float correctionRatio = 0.8f;
+    #endregion
 
     // Use this for initialization
     void Start()
     {
         hypercube = FindObjectOfType<hypercubeCamera>();
         castmesh = FindObjectOfType<castMesh>();
+        palette = FindObjectOfType<Palette>();
 
         NewFlipbook();
     }
@@ -60,22 +71,72 @@ public class FlipMaster : MonoBehaviour
         if (flipControls == FlipControls.General)
         {
             if (Input.GetKeyDown(changeSliceForward))
-                ChangeSlice(-1);
+                SafeIncrement(ref currentSlice, -1, flipSlices.Count);
             if (Input.GetKeyDown(changeSliceBack))
-                ChangeSlice(1);
+                SafeIncrement(ref currentSlice, 1, flipSlices.Count);
         }
+
+        //Play
+        if (Input.GetKeyDown(KeyCode.Return))
+        {
+            if (flipControls != FlipControls.Play)
+            {
+                RevertConstrolsToGeneral();
+                flipControls = FlipControls.Play;
+                StartCoroutine("PlayAnimation");
+            }
+            else
+            {
+                RevertConstrolsToGeneral();
+            }
+
+            print("State is now " + flipControls);
+        }
+
+        #region test with frames
+        if (Input.GetKeyDown(KeyCode.B))
+        {
+            print("New blank frame added");
+            AddFrame(true);
+        }
+
+        if (Input.GetKeyDown(KeyCode.C))
+        {
+            print("Duplicate frame added");
+            AddFrame(false);
+        }
+
+        if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            SafeIncrement(ref currentFrame, 1, GetFrameCount());
+            UpdateFrames();
+            print("Moved to frame " + currentFrame);
+            print(GetFrameCount());
+        }
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        {
+            SafeIncrement(ref currentFrame, -1, GetFrameCount());
+            UpdateFrames();
+            print("Moved to frame " + currentFrame);
+            print(GetFrameCount());
+        }
+        #endregion
+    }
+
+    public void RevertConstrolsToGeneral()
+    {
+        flipControls = FlipControls.General;
+        palette.TogglePalette();
+        StopCoroutine("PlayAnimation");
     }
 
     public void NewFlipbook()
     {
-        //is hardcoded for now
-        var flipSliceCount = 10;
-
         #region scaling to fit in hypercube
 
         transform.localScale = hypercube.transform.localScale;
         var hyperRatio = hypercube.transform.localScale.x / hypercube.transform.localScale.y;
-        var panelRatio = (float) panelWidth / panelHeight;
+        var panelRatio = (float)panelWidth / panelHeight;
         if (hyperRatio > panelRatio)
         {
             transform.localScale = transform.localScale.SetY(hypercube.transform.localScale.y);
@@ -91,36 +152,72 @@ public class FlipMaster : MonoBehaviour
 
         #endregion
 
-
-        //slice distance is usually 1 slice distance unless the amount of slices in the machine is at least twice as many as in the animation, then it goes up to 2, etc. 
-        var sliceDistance = Mathf.Floor((float) flipSliceCount / castmesh.slices) / castmesh.slices;
-
         //create the slices and their panels, and store them in flipSlices
         flipSlices = new List<FlipSlice>();
         timetable = new List<List<int>>();
         for (int i = 0; i < flipSliceCount; i++)
         {
             //make a slice
-            var flipSlice = (GameObject) Instantiate(flipSlicePrefab, transform);
-            flipSlice.transform.localPosition += Vector3.forward *
-                                                 (sliceDistance * (i - flipSliceCount * 0.5f) + 0.5f * sliceDistance);
-                //TODO: test whether this should be + or - .5*slicedistance
-            flipSlice.transform.localScale = Vector3.one;
-            flipSlices.Add(NewFlipSlice(flipSlice));
+            flipSlices.Add(NewFlipSlice(i));
 
             //make a first panel for that slice
-            var flipPanel = (GameObject) Instantiate(flipPanelPrefab, flipSlice.transform);
-            flipPanel.transform.localPosition = Vector3.zero;
-            flipPanel.transform.localScale = Vector3.one;
-            flipSlices[i].fp.Add(NewFlipPanel(flipPanel));
+            flipSlices[i].fp.Add(NewFlipPanel(flipSlices[i]));
 
             //add an entry to the timetable
             timetable.Add(new List<int>());
         }
     }
 
-    FlipSlice NewFlipSlice(GameObject fsGameObject)
+    public void AddFrame(bool blankFrame)
     {
+        for (int i = 0; i < flipSliceCount; i++)
+        {
+            flipSlices[i].fp.Insert(currentFrame + 1, NewFlipPanel(flipSlices[i]));
+            if (!blankFrame)
+            {
+                flipSlices[i].fp[currentFrame + 1].tex.SetPixels(flipSlices[i].fp[currentFrame].tex.GetPixels());
+            }
+            flipSlices[i].fp[currentFrame + 1].tex.Apply();
+        }
+        currentFrame += 1;
+        UpdateFrames();
+    }
+
+    public IEnumerator PlayAnimation()
+    {
+        var framerate = 12f / 60f;
+        var frameWait = new WaitForSeconds(framerate);
+        while (true)
+        {
+            UpdateFrames();
+            yield return frameWait;
+            SafeIncrement(ref currentFrame, 1, GetFrameCount());
+        }
+    }
+
+    public void UpdateFrames()
+    {
+        for (int i = 0; i < flipSlices.Count; i++)
+        {
+            for (int j = 0; j < flipSlices[i].fp.Count; j++)
+            {
+                var active = j == currentFrame;
+                flipSlices[i].fp[j].gameObject.SetActive(active);
+            }
+        }
+    }
+
+    FlipSlice NewFlipSlice(int slice)
+    {
+        //slice distance is usually 1 slice distance unless the amount of slices in the machine is at least twice as many as in the animation, then it goes up to 2, etc. 
+        var sliceDistance = Mathf.Floor((float)flipSliceCount / castmesh.slices) / castmesh.slices;
+
+        var fsGameObject = (GameObject)Instantiate(flipSlicePrefab, transform);
+        fsGameObject.transform.localPosition += Vector3.forward *
+                                             (sliceDistance * (slice - flipSliceCount * 0.5f) + 0.5f * sliceDistance);
+        fsGameObject.transform.localScale = Vector3.one;
+        fsGameObject.name = "Flip Slice " + slice;
+
         var flipSlice = new FlipSlice()
         {
             gameObject = fsGameObject,
@@ -131,8 +228,13 @@ public class FlipMaster : MonoBehaviour
         return flipSlice;
     }
 
-    FlipPanel NewFlipPanel(GameObject fpGameObject)
+    FlipPanel NewFlipPanel(FlipSlice flipSlice)
     {
+        var fpGameObject = (GameObject)Instantiate(flipPanelPrefab, flipSlice.transform);
+        fpGameObject.transform.localPosition = Vector3.zero;
+        fpGameObject.transform.localScale = Vector3.one;
+        fpGameObject.name = "Flip Panel";
+
         var flipPanel = new FlipPanel
         {
             gameObject = fpGameObject,
@@ -157,12 +259,18 @@ public class FlipMaster : MonoBehaviour
         return flipPanel;
     }
 
-    void ChangeSlice(int i)
+    void SafeIncrement(ref int index, int i, int count)
     {
-        currentSlice += i;
-        if (currentSlice > castmesh.slices - 1)
-            currentSlice = 0;
-        if (currentSlice < 0)
-            currentSlice = castmesh.slices - 1;
+        index += i;
+        while (index >= count)
+            index -= count;
+        while (index < 0)
+            index += count;
+    }
+
+    int GetFrameCount()
+    {
+        var frameCount = flipSlices[0].fp.Count;
+        return frameCount;
     }
 }

@@ -13,21 +13,6 @@ public class Brush
     }
 }
 
-public class HistoryPixel
-{
-    public int x;
-    public int y;
-    public Color color;
-
-    public HistoryPixel(int x, int y, Color color)
-    {
-
-        this.x = x;
-        this.y = y;
-        this.color = color;
-    }
-}
-
 public class DrawHistory : HistoryAction
 {
     //int[] is x, y. color[] is oldColor, newColor
@@ -71,8 +56,9 @@ public class Drawing : MonoBehaviour
     Vector2 mousePos;
 
     FlipMaster flipMaster;
-    //so that it triggers a slice reset
+    //so that it triggers a slice and frame reset
     int currentSlice = -1;
+    int currentFrame = -1;
     HistoryManager history;
 
     float deadspaceW;
@@ -83,9 +69,7 @@ public class Drawing : MonoBehaviour
     Brush b3;
 
     public Brush currentBrush;
-
     public Color currentColor = Color.white;
-
     DrawHistory drawHistory;
 
     void Start()
@@ -147,11 +131,12 @@ public class Drawing : MonoBehaviour
 
     void Update()
     {
-        if (currentSlice != flipMaster.currentSlice)
+        if (currentSlice != flipMaster.currentSlice || currentFrame != flipMaster.currentFrame)
         {
             currentSlice = flipMaster.currentSlice;
+            currentFrame = flipMaster.currentFrame;
             cursor.transform.position = flipMaster.flipSlices[currentSlice].transform.position - Vector3.forward * 0.01f;
-            mr = flipMaster.flipSlices[currentSlice].fp[0].mr;
+            mr = flipMaster.flipSlices[currentSlice].fp[currentFrame].mr;
             tex = (Texture2D)mr.material.mainTexture;
         }
 
@@ -200,7 +185,7 @@ public class Drawing : MonoBehaviour
         var previousPy = 0;
 
         //Save the overwritten pixels for history
-        drawHistory = new DrawHistory(flipMaster.flipSlices[currentSlice].fp[0]); //TODO: instead of just 0, whatever the current fp is
+        drawHistory = new DrawHistory(flipMaster.flipSlices[currentSlice].fp[currentFrame]); //TODO: instead of just 0, whatever the current fp is
 
         while (true)
         {
