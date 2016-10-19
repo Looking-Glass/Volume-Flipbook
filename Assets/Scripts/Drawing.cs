@@ -15,18 +15,23 @@ public class Brush
 
 public class DrawHistory : HistoryAction
 {
-    //int[] is x, y. color[] is oldColor, newColor
+    //int is x, y. color[] is oldColor, newColor
     public Dictionary<int, Color[]> pixels;
-    public FlipPanel flipPanel;
+    public FlipMaster flipMaster;
+    public int fsIndex;
+    public int fpIndex;
 
-    public DrawHistory(FlipPanel flipPanel)
+    public DrawHistory(FlipMaster flipMaster)
     {
         pixels = new Dictionary<int, Color[]>();
-        this.flipPanel = flipPanel;
+        this.flipMaster = flipMaster;
+        fsIndex = flipMaster.currentSlice;
+        fpIndex = flipMaster.currentFrame;
     }
 
     public override void PerformAction()
     {
+        var flipPanel = flipMaster.flipSlices[fsIndex].fp[fpIndex];
         foreach (var pixel in pixels)
         {
             int px;
@@ -38,6 +43,7 @@ public class DrawHistory : HistoryAction
 
     public override void UndoAction()
     {
+        var flipPanel = flipMaster.flipSlices[fsIndex].fp[fpIndex];
         foreach (var pixel in pixels)
         {
             int px;
@@ -196,7 +202,7 @@ public class Drawing : MonoBehaviour
         var previousPy = 0;
 
         //Save the overwritten pixels for history
-        drawHistory = new DrawHistory(flipMaster.flipSlices[currentSlice].fp[currentFrame]); //TODO: instead of just 0, whatever the current fp is
+        drawHistory = new DrawHistory(flipMaster);
 
         while (true)
         {

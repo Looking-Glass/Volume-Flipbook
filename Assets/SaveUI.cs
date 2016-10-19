@@ -32,7 +32,7 @@ public class SaveUI : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.S) && !editing)
         {
             flipMaster.SetFlipControls(FlipMaster.FlipControls.Save);
-            saveDipShow.Toggle();
+            saveDipShow.ForceToggleAnim();
             saveInputField.enabled = true;
             saveInputField.ActivateInputField();
         }
@@ -40,7 +40,7 @@ public class SaveUI : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.L) && !editing)
         {
             flipMaster.SetFlipControls(FlipMaster.FlipControls.Load);
-            loadDipShow.Toggle();
+            loadDipShow.ForceToggleAnim();
             loadInputField.enabled = true;
             loadInputField.ActivateInputField();
         }

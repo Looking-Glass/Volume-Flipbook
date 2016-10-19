@@ -41,7 +41,7 @@ public class Palette : MonoBehaviour
             {
                 flipMaster.SetFlipControls(FlipMaster.FlipControls.Palette);
             }
-            dipShow.Toggle();
+            dipShow.ForceToggleAnim();
         }
         
         //Choose a color

@@ -11,10 +11,12 @@ public class Timeline : MonoBehaviour
     int currentFrame = -1;
     int frameCount = -1;
     float timelineSize = 3.1f; //todo: don't hardcode this
+    DipShow dipShow;
 
     void Start()
     {
         flipMaster = FindObjectOfType<FlipMaster>();
+        dipShow = GetComponent<DipShow>();
     }
 
     void Update()
@@ -27,6 +29,23 @@ public class Timeline : MonoBehaviour
         if (currentFrame != flipMaster.currentFrame)
         {
             ResetSelector();
+        }
+
+        if (flipMaster.flipControls == FlipMaster.FlipControls.General)
+        {
+            if (Input.GetKeyDown(KeyCode.T))
+            {
+                flipMaster.SetFlipControls(FlipMaster.FlipControls.Timeline);
+                dipShow.ForceToggleAnim();
+            }
+        }
+        else if (flipMaster.flipControls == FlipMaster.FlipControls.Timeline)
+        {
+            if (Input.GetKeyDown(KeyCode.T) || Input.GetKeyDown(KeyCode.Escape))
+            {
+                flipMaster.RevertControlsToGeneral();
+                dipShow.ForceToggleAnim();
+            }
         }
     }
 

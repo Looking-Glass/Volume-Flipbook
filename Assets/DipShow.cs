@@ -5,6 +5,11 @@ public class DipShow : MonoBehaviour
 {
     FlipMaster flipMaster;
     public FlipMaster.FlipControls thisFlipControls;
+    // the next 3 are for special cases
+    public bool dontChangeControls;
+    public bool dontHideFlipbook;
+    public bool independentShow;
+    //
     float timer;
     Vector3 startPosition;
     Vector3 endPosition;
@@ -18,21 +23,31 @@ public class DipShow : MonoBehaviour
         endPosition = startPosition.SetY(0);
     }
 
-    public void Toggle()
+    public void ForceToggleAnim(bool toggleIndependentShow = false, bool newIndependentShow = false)
     {
+        if (toggleIndependentShow)
+            independentShow = newIndependentShow;
+
         StopCoroutine("ToggleCR");
         StartCoroutine("ToggleCR");
     }
 
     IEnumerator ToggleCR()
     {
-        var show = flipMaster.flipControls == thisFlipControls;
+        bool show;
+        if (!dontChangeControls)
+            show = flipMaster.flipControls == thisFlipControls;
+        else
+            show = independentShow;
 
-        foreach (FlipSlice flipSlice in flipMaster.flipSlices)
+        if (!dontHideFlipbook)
         {
-            foreach (FlipPanel flipPanel in flipSlice.fp)
+            foreach (FlipSlice flipSlice in flipMaster.flipSlices)
             {
-                flipPanel.mr.material.color = show ? new Color(0.3f, 0.3f, 0.3f) : Color.white;
+                foreach (FlipPanel flipPanel in flipSlice.fp)
+                {
+                    flipPanel.mr.material.color = show ? new Color(0.3f, 0.3f, 0.3f) : Color.white;
+                }
             }
         }
 
