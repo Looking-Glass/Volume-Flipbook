@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using hypercube;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class FlipPanel
 {
@@ -39,18 +41,23 @@ public class FlipMaster : MonoBehaviour
     public int currentFrame;
     //is hardcoded for now
     int flipSliceCount = 10;
+    public int tempSlice;
+    Drawing drawing;
 
     //Controls
     public enum FlipControls
     {
         General,
         Palette,
-        Play
+        Play,
+        Save,
+        Load
     }
     public FlipControls flipControls;
     public KeyCode changeSliceForward = KeyCode.RightBracket;
     public KeyCode changeSliceBack = KeyCode.LeftBracket;
     Palette palette;
+    SaveUI saveUI;
 
     //Hacky mapping correction
     float correctionRatio = 0.8f;
@@ -62,6 +69,8 @@ public class FlipMaster : MonoBehaviour
         hypercube = FindObjectOfType<hypercubeCamera>();
         castmesh = FindObjectOfType<castMesh>();
         palette = FindObjectOfType<Palette>();
+        drawing = FindObjectOfType<Drawing>();
+        saveUI = FindObjectOfType<SaveUI>();
 
         NewFlipbook();
     }
@@ -79,15 +88,14 @@ public class FlipMaster : MonoBehaviour
         //Play
         if (Input.GetKeyDown(KeyCode.Return))
         {
-            if (flipControls != FlipControls.Play)
+            if (flipControls == FlipControls.General)
             {
-                RevertConstrolsToGeneral();
-                flipControls = FlipControls.Play;
+                SetFlipControls(FlipControls.Play);
                 StartCoroutine("PlayAnimation");
             }
             else
             {
-                RevertConstrolsToGeneral();
+                RevertControlsToGeneral();
             }
 
             print("State is now " + flipControls);
@@ -123,14 +131,35 @@ public class FlipMaster : MonoBehaviour
         #endregion
     }
 
-    public void RevertConstrolsToGeneral()
+    public void RevertControlsToGeneral()
     {
         flipControls = FlipControls.General;
-        palette.TogglePalette();
+        var dipshows = FindObjectsOfType<DipShow>();
+        foreach (DipShow dipshow in dipshows)
+        {
+            dipshow.Toggle();
+        }
+        var inputFields = FindObjectsOfType<InputField>();
+        foreach (InputField inputField in inputFields)
+        {
+            inputField.enabled = false;
+        }
         StopCoroutine("PlayAnimation");
+        drawing.ResetRefs();
     }
 
-    public void NewFlipbook()
+    public void RevertControlsAtEndOfFrame()
+    {
+        StartCoroutine("RevertEOF");
+    }
+
+    IEnumerator RevertEOF()
+    {
+        yield return new WaitForEndOfFrame();
+        RevertControlsToGeneral();
+    }
+
+    public void NewFlipbook(string[] slicePaths = null)
     {
         #region scaling to fit in hypercube
 
@@ -152,20 +181,51 @@ public class FlipMaster : MonoBehaviour
 
         #endregion
 
+        //Clear children if there are any.
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            Destroy(transform.GetChild(i).gameObject);
+        }
+
         //create the slices and their panels, and store them in flipSlices
         flipSlices = new List<FlipSlice>();
         timetable = new List<List<int>>();
+
+        if (slicePaths != null)
+            flipSliceCount = slicePaths.Length;
+
         for (int i = 0; i < flipSliceCount; i++)
         {
             //make a slice
             flipSlices.Add(NewFlipSlice(i));
 
             //make a first panel for that slice
-            flipSlices[i].fp.Add(NewFlipPanel(flipSlices[i]));
+            if (slicePaths == null)
+                flipSlices[i].fp.Add(NewFlipPanel(flipSlices[i]));
+            else
+            {
+                var pngPaths = Directory.GetFiles(slicePaths[i]);
+                for (int j = 0; j < pngPaths.Length; j++)
+                {
+                    flipSlices[i].fp.Add(NewFlipPanel(flipSlices[i], pngPaths[j]));
+                }
+            }
+
+            currentSlice = 0;
+            currentFrame = 0;
+            UpdateFrames();
+            drawing.ResetRefs();
 
             //add an entry to the timetable
             timetable.Add(new List<int>());
         }
+    }
+
+    public void SetFlipControls(FlipControls flipControlsIn)
+    {
+        RevertControlsToGeneral();
+        flipControls = flipControlsIn;
+        drawing.ResetRefs();
     }
 
     public void AddFrame(bool blankFrame)
@@ -228,7 +288,7 @@ public class FlipMaster : MonoBehaviour
         return flipSlice;
     }
 
-    FlipPanel NewFlipPanel(FlipSlice flipSlice)
+    FlipPanel NewFlipPanel(FlipSlice flipSlice, string pngPath = null)
     {
         var fpGameObject = (GameObject)Instantiate(flipPanelPrefab, flipSlice.transform);
         fpGameObject.transform.localPosition = Vector3.zero;
@@ -247,12 +307,22 @@ public class FlipMaster : MonoBehaviour
                 wrapMode = TextureWrapMode.Clamp
             }
         };
-        var colors = new Color[flipPanel.tex.width * flipPanel.tex.height];
-        for (int i = 0; i < colors.Length; i++)
+
+        if (pngPath != null && Path.GetExtension(pngPath).ToLower() == ".png" && File.Exists(pngPath))
         {
-            colors[i] = Color.black;
+            var pngBytes = File.ReadAllBytes(pngPath);
+            flipPanel.tex.LoadImage(pngBytes);
         }
-        flipPanel.tex.SetPixels(colors);
+        else
+        {
+            var colors = new Color[flipPanel.tex.width * flipPanel.tex.height];
+            for (int i = 0; i < colors.Length; i++)
+            {
+                colors[i] = Color.black;
+            }
+            flipPanel.tex.SetPixels(colors);
+        }
+
         flipPanel.tex.Apply();
         flipPanel.mr.material.mainTexture = flipPanel.tex;
 
@@ -268,7 +338,7 @@ public class FlipMaster : MonoBehaviour
             index += count;
     }
 
-    int GetFrameCount()
+    public int GetFrameCount()
     {
         var frameCount = flipSlices[0].fp.Count;
         return frameCount;

@@ -133,11 +133,7 @@ public class Drawing : MonoBehaviour
     {
         if (currentSlice != flipMaster.currentSlice || currentFrame != flipMaster.currentFrame)
         {
-            currentSlice = flipMaster.currentSlice;
-            currentFrame = flipMaster.currentFrame;
-            cursor.transform.position = flipMaster.flipSlices[currentSlice].transform.position - Vector3.forward * 0.01f;
-            mr = flipMaster.flipSlices[currentSlice].fp[currentFrame].mr;
-            tex = (Texture2D)mr.material.mainTexture;
+            ResetRefs();
         }
 
         var mpX = Input.mousePosition.x;
@@ -170,6 +166,21 @@ public class Drawing : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Alpha3))
                 currentBrush = b3;
         }
+    }
+
+    public void ResetRefs()
+    {
+        if (flipMaster == null)
+            return;
+
+        currentSlice = flipMaster.currentSlice;
+        currentFrame = flipMaster.currentFrame;
+        var cursorPos = flipMaster.flipControls == FlipMaster.FlipControls.General
+            ? flipMaster.flipSlices[currentSlice].transform.position
+            : flipMaster.flipSlices[0].transform.position;
+        cursor.transform.position = cursorPos - Vector3.forward * 0.01f;
+        mr = flipMaster.flipSlices[currentSlice].fp[currentFrame].mr;
+        tex = (Texture2D)mr.material.mainTexture;
     }
 
     IEnumerator DrawLine()

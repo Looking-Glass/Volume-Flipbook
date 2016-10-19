@@ -15,18 +15,14 @@ public class Palette : MonoBehaviour
     Texture2D pTex;
     FlipMaster flipMaster;
     Drawing drawing;
-    float timer;
-    Vector3 startPosition;
-    Vector3 endPosition;
-    int tempSlice;
+    DipShow dipShow;
 
     void Start()
     {
-        startPosition = transform.localPosition;
-        endPosition = startPosition.SetY(0);
         flipMaster = FindObjectOfType<FlipMaster>();
         drawing = FindObjectOfType<Drawing>();
         pTex = (Texture2D)paletteQuad.GetComponent<MeshRenderer>().material.mainTexture;
+        dipShow = GetComponent<DipShow>();
 
         colorCoord = new[] { 2, 3 };
         SetColorFromCoord();
@@ -37,16 +33,15 @@ public class Palette : MonoBehaviour
     {
         if (Input.GetKeyDown(toggleShowPalette))
         {
-            if (flipMaster.flipControls != FlipMaster.FlipControls.Palette)
+            if (flipMaster.flipControls == FlipMaster.FlipControls.Palette)
             {
-                flipMaster.RevertConstrolsToGeneral();
-                flipMaster.flipControls = FlipMaster.FlipControls.Palette;
+                flipMaster.RevertControlsToGeneral();
             }
-            else
+            else if (flipMaster.flipControls == FlipMaster.FlipControls.General)
             {
-                flipMaster.RevertConstrolsToGeneral();
+                flipMaster.SetFlipControls(FlipMaster.FlipControls.Palette);
             }
-            TogglePalette();
+            dipShow.Toggle();
         }
         
         //Choose a color
@@ -69,47 +64,8 @@ public class Palette : MonoBehaviour
                 }
             }
         }
-
     }
-
-    public void TogglePalette()
-    {
-        StopCoroutine("TogglePaletteCR");
-        StartCoroutine("TogglePaletteCR");
-    }
-
-    IEnumerator TogglePaletteCR()
-    {
-        var showPalette = flipMaster.flipControls == FlipMaster.FlipControls.Palette;
-
-        foreach (FlipSlice flipSlice in flipMaster.flipSlices)
-        {
-            foreach (FlipPanel flipPanel in flipSlice.fp)
-            {
-                flipPanel.mr.material.color = showPalette ? new Color(0.3f, 0.3f, 0.3f) : Color.white;
-            }
-        }
-
-        if (showPalette)
-        {
-            tempSlice = flipMaster.currentSlice;
-            flipMaster.currentSlice = 0;
-        }
-        else
-        {
-            flipMaster.currentSlice = tempSlice;
-        }
-
-        var targetTime = showPalette ? 1f : 0f;
-        while (!Mathf.Approximately(timer, targetTime))
-        {
-            timer += Time.deltaTime*(flipMaster.flipControls == FlipMaster.FlipControls.Palette ? 1 : -1)*speed;
-            timer = Mathf.Clamp01(timer);
-            transform.localPosition = Vector3.Lerp(startPosition, endPosition, movementCurve.Evaluate(timer));
-            yield return new WaitForEndOfFrame();
-        }
-    }
-
+    
     void SetColorFromCoord()
     {
         int px = colorCoord[0];
