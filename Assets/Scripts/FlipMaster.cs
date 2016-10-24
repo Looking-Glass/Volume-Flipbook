@@ -132,7 +132,7 @@ public class FlipMaster : MonoBehaviour
         //Play
         if (Input.GetKeyDown(KeyCode.Return))
         {
-            if (flipControls == FlipControls.General)
+            if (flipControls == FlipControls.General || flipControls == FlipControls.Timeline)
             {
                 SetFlipControls(FlipControls.Play);
                 StartCoroutine("PlayAnimation");
@@ -143,13 +143,16 @@ public class FlipMaster : MonoBehaviour
             }
         }
 
-        if (flipControls == FlipControls.General)
+        if (flipControls == FlipControls.General || flipControls == FlipControls.Timeline)
         {
-            //Change slice controls
-            if (Input.GetKeyDown(changeSliceForward))
-                SafeIncrement(ref currentSlice, -1, flipSlices.Count);
-            if (Input.GetKeyDown(changeSliceBack))
-                SafeIncrement(ref currentSlice, 1, flipSlices.Count);
+            if (flipControls == FlipControls.General)
+            {
+                //Change slice controls
+                if (Input.GetKeyDown(changeSliceForward))
+                    SafeIncrement(ref currentSlice, -1, flipSlices.Count);
+                if (Input.GetKeyDown(changeSliceBack))
+                    SafeIncrement(ref currentSlice, 1, flipSlices.Count);
+            }
 
             if (Input.GetKeyDown(KeyCode.B))
             {

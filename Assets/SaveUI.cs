@@ -50,11 +50,13 @@ public class SaveUI : MonoBehaviour
             if (flipMaster.flipControls == FlipMaster.FlipControls.Save)
             {
                 SaveFile(saveInputField.text);
+                flipMaster.RevertControlsAtEndOfFrame();
             }
 
             if (flipMaster.flipControls == FlipMaster.FlipControls.Load)
             {
                 LoadFile(loadInputField.text);
+                flipMaster.RevertControlsAtEndOfFrame();
             }
         }
 

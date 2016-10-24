@@ -77,6 +77,7 @@ public class Drawing : MonoBehaviour
     public Brush currentBrush;
     public Color currentColor = Color.white;
     DrawHistory drawHistory;
+    bool isDrawing;
 
     void Start()
     {
@@ -155,13 +156,8 @@ public class Drawing : MonoBehaviour
         {
             if (Input.GetMouseButtonDown(0))
             {
+                isDrawing = true;
                 StartCoroutine("DrawLine");
-            }
-
-            if (Input.GetMouseButtonUp(0))
-            {
-                history.PerformAndRecord(drawHistory, true);
-                StopCoroutine("DrawLine");
             }
 
             //Change brushes
@@ -171,6 +167,14 @@ public class Drawing : MonoBehaviour
                 currentBrush = b2;
             if (Input.GetKeyDown(KeyCode.Alpha3))
                 currentBrush = b3;
+        }
+
+        //No matter what 
+        if (Input.GetMouseButtonUp(0) && isDrawing)
+        {
+            isDrawing = false;
+            history.PerformAndRecord(drawHistory, true);
+            StopCoroutine("DrawLine");
         }
     }
 

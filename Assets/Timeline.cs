@@ -12,6 +12,7 @@ public class Timeline : MonoBehaviour
     int frameCount = -1;
     float timelineSize = 3.1f; //todo: don't hardcode this
     DipShow dipShow;
+    public Transform cursor;
 
     void Start()
     {
@@ -41,11 +42,54 @@ public class Timeline : MonoBehaviour
         }
         else if (flipMaster.flipControls == FlipMaster.FlipControls.Timeline)
         {
+            if (Input.GetMouseButtonDown(0))
+            {
+                var ray = new Ray(cursor.position + Vector3.back, Vector3.forward);
+                var rayHit = new RaycastHit();
+
+                var rayBool = Physics.Raycast(ray, out rayHit);
+                if (rayBool)
+                {
+                    StartCoroutine("SelectorFollowMouse");
+                }
+            }
+
             if (Input.GetKeyDown(KeyCode.T) || Input.GetKeyDown(KeyCode.Escape))
             {
                 flipMaster.RevertControlsToGeneral();
                 dipShow.ForceToggleAnim();
             }
+        }
+
+        if (Input.GetMouseButtonUp(0) || Input.GetKeyDown(KeyCode.T) || Input.GetKeyDown(KeyCode.Escape))
+        {
+            StopCoroutine("SelectorFollowMouse");
+            ResetSelector();
+        }
+    }
+
+    IEnumerator SelectorFollowMouse()
+    {
+        var waitEOF = new WaitForEndOfFrame();
+        while (true)
+        {
+            if (cursor.position.x < timelineSize && cursor.position.x > -timelineSize)
+                selectionMarker.position = selectionMarker.position.SetX(cursor.position.x);
+            else if (cursor.position.x > timelineSize)
+                selectionMarker.position = selectionMarker.position.SetX(timelineSize);
+            else if (cursor.position.x < timelineSize)
+                selectionMarker.position = selectionMarker.position.SetX(-timelineSize);
+
+
+            var currentFramePos = (selectionMarker.position.x + timelineSize) / (timelineSize + timelineSize);
+            currentFramePos = Mathf.Lerp(-0.5f / flipMaster.GetFrameCount(), (flipMaster.GetFrameCount() + 0.5f) / flipMaster.GetFrameCount(), currentFramePos);
+            currentFramePos = Mathf.Clamp01(currentFramePos);
+            currentFramePos = currentFramePos * flipMaster.GetFrameCount();
+            var newCurrentFrame = Mathf.FloorToInt(currentFramePos);
+            newCurrentFrame = newCurrentFrame >= flipMaster.GetFrameCount() ? newCurrentFrame - 1 : newCurrentFrame;
+            flipMaster.currentFrame = newCurrentFrame;
+            flipMaster.UpdateFrames();
+            yield return waitEOF;
         }
     }
 
