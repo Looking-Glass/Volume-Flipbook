@@ -13,24 +13,27 @@ public class RadialMenuWedge : MonoBehaviour
     MeshFilter mf;
     public GameObject radialWedge;
     public Transform sprite;
+    [HideInInspector]
+    public SpriteRenderer spriteSR;
 
     void Awake()
     {
         gmesh = new GMesh();
         mf = GetComponentInChildren<MeshFilter>();
         mf.mesh = new Mesh();
-        GenerateMenu();
-        UpdateMenu();
+        spriteSR = sprite.GetComponent<SpriteRenderer>();
+        GenerateWedge();
+        UpdateWedge();
     }
 
     public void SetPointRot(float point, float rot)
     {
         breakPoint = point;
         rotation = rot;
-        UpdateMenu();
+        UpdateWedge();
     }
 
-    void GenerateMenu()
+    void GenerateWedge()
     {
         locs = new[]
         {
@@ -63,7 +66,7 @@ public class RadialMenuWedge : MonoBehaviour
         gmesh.Apply(mf.mesh);
     }
 
-    void UpdateMenu()
+    void UpdateWedge()
     {
         var newRot = (1 - rotation + 0.25f) * 2 * Mathf.PI;
         var newPoint = (1 - breakPoint) * 4;
@@ -81,7 +84,7 @@ public class RadialMenuWedge : MonoBehaviour
 
         gmesh.Apply(mf.mesh);
 
-        var spriteRot = newRot + (1 - breakPoint) * 2.5f * Mathf.PI;
+        var spriteRot = newRot + (1 - breakPoint) * Mathf.PI + Mathf.PI;
         var sprDist = 0.3f;
         sprite.localPosition = new Vector3(Mathf.Cos(spriteRot) * sprDist, Mathf.Sin(spriteRot) * sprDist, sprite.localPosition.z);
     }
