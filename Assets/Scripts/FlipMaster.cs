@@ -102,13 +102,16 @@ public class FlipMaster : MonoBehaviour
         Play,
         Save,
         Load,
-        Timeline
+        Timeline,
+        RadialMenu
     }
     public FlipControls flipControls;
     public KeyCode changeSliceForward = KeyCode.RightBracket;
     public KeyCode changeSliceBack = KeyCode.LeftBracket;
     Palette palette;
     SaveUI saveUI;
+
+    public RadialMenu mainRadialMenu;
 
     //Hacky mapping correction
     float correctionRatio = 0.8f;
@@ -140,6 +143,16 @@ public class FlipMaster : MonoBehaviour
             else if (flipControls == FlipControls.Play)
             {
                 RevertControlsToGeneral();
+            }
+        }
+
+        //Show Menu
+        if (flipControls == FlipControls.General || flipControls == FlipControls.RadialMenu)
+        {
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                mainRadialMenu.ToggleShow();
+                SetFlipControls(mainRadialMenu.showing ? FlipControls.RadialMenu : FlipControls.General);
             }
         }
 
@@ -336,7 +349,7 @@ public class FlipMaster : MonoBehaviour
 
     public IEnumerator PlayAnimation()
     {
-        var framerate = 12f / 60f;
+        var framerate = 1f / 6f;
         var frameWait = new WaitForSeconds(framerate);
         while (true)
         {

@@ -1,0 +1,63 @@
+*
+*
+*
+
+Volume Flipbook
+
+organizing of goals 12.14.16
+
+* * *
+
+Select tools:
+just keep a list of slices each with a list of pixels that are selected.
+if fill tool is used, fill only these pixels
+
+Rectangle Select tool:
+save first click pixel, on release use last position to fill list of selected out.
+can change slice to select box through space!
+can hold shift to select square
+
+Lasso Select tool:
+don't actually know how to handle this yet
+
+Select all:
+ctrl a: select all on slice
+ctrl shift a: select all on all slices
+
+Radial menu:
+don't make it too complicated
+
+Radial Menu options:
+
+file:
+save, save as, browse, exit,
+brush:
+1, 2, 3, dither 50%, dither 25%, dither 12%
+color:
+(palette)
+timeline:
+open/close timeline, add blank, duplicate current, delete frame, set relative frame time (0.5x, 2x 3x), set overall framerate
+edit:
+select tool, fill tool, copy, paste, erase (darken)
+
+Change relative time of frames:
+have some indicator for this.
+
+Intro/splash screen:
+Volume Flipbook intro
+
+Browsing for saved files:
+look in folder called Saved
+give a most recent grid of previews (flattened animations)
+
+Fill tool:
+look up how they work
+
+Dither tool:
+only fill the pixels that exist in the dither
+
+Magnified/2D mode:
+switch to a 2d view on the laptop
+
+Handle fewer slices?
+just run experiments and see what breaks

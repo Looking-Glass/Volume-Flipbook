@@ -32,7 +32,22 @@ namespace hypercube
 
         public bool _flipX { get; private set; } //true  values, coming from the config file.
         public bool _flipY { get; private set; }
-        public bool _flipZ { get; private set; }      
+        public bool _flipZ { get; private set; }
+
+
+        private static bool _drawOccludedMode = false; 
+        public bool drawOccludedMode
+        {
+            get
+            {
+                return _drawOccludedMode;
+            }
+            set
+            {
+                _drawOccludedMode = value;
+                updateMesh();
+            }
+        }
 
 #if HYPERCUBE_DEV     //these shouldn't be exposed unless someone is interested in mucking with the inner workings of hypercube
         public float sliceOffsetX;
@@ -56,11 +71,13 @@ namespace hypercube
 
         public float zPos = .01f;
         [Range(1, 20)]
+
         public int tesselation = 8;
         public GameObject sliceMesh;
 
         [Tooltip("The materials set here will be applied to the dynamic mesh")]
         public List<Material> canvasMaterials = new List<Material>();
+        public Material occlusionMaterial;
 
         [HideInInspector]
         public bool usingCustomDimensions = false; //this is an override so that the canvas can be told to obey the dimensions of some particular output w/h screen other than the game window
@@ -91,8 +108,9 @@ namespace hypercube
         void Awake()
         {
             foundConfigFile = false;
-
+#if !UNITY_EDITOR
             Debug.Log("Loading Hypercube Tools v" + hypercubeCamera.version + " on  Unity v" + Application.unityVersion);
+#endif
         }
 
         void Start()
@@ -184,6 +202,7 @@ namespace hypercube
             volumeHardwareVer = d.getValueAsFloat("volumeHardwareVersion", -9999f);
 
             slices = d.getValueAsInt("sliceCount", slices);
+            Shader.SetGlobalInt("_sliceCount", slices); //let any shaders that need slice count, know what it is currently.
             sliceOffsetX = d.getValueAsFloat("offsetX", sliceOffsetX);
             sliceOffsetY = d.getValueAsFloat("offsetY", sliceOffsetY);
             sliceWidth = d.getValueAsFloat("sliceWidth", sliceWidth);
@@ -204,6 +223,13 @@ namespace hypercube
 				d.getValueAsFloat ("projectionCentimeterWidth", 10f),
 				d.getValueAsFloat ("projectionCentimeterHeight", 5f),
 				d.getValueAsFloat ("projectionCentimeterDepth", 7f));
+
+
+            //TODO these can come from the hardware
+            Shader.SetGlobalFloat("_hardwareContrastMod", 1f);
+            Shader.SetGlobalFloat("_sliceBrightnessR", 1f);
+            Shader.SetGlobalFloat("_sliceBrightnessG", 1f);
+            Shader.SetGlobalFloat("_sliceBrightnessB", 1f);
 
             return foundConfigFile;
         }
@@ -676,6 +702,28 @@ namespace hypercube
                     UV_right.Set(0f, .5f);
                 }
 
+                //if we are drawing occluded mode, modify the UV's so that they make sense.
+                if (_drawOccludedMode)
+                {
+                    float sliceMod = 1f / (float)slices;
+                    UV_ul.y *= sliceMod;
+                    UV_mid.y *= sliceMod;
+                    UV_br.y *= sliceMod;
+                    UV_left.y *= sliceMod;
+                    UV_bottom.y *= sliceMod;
+                    UV_top.y *= sliceMod;
+                    UV_right.y *= sliceMod;
+
+                    UV_ul.y += (sliceMod * s);
+                    UV_mid.y += (sliceMod * s);
+                    UV_br.y += (sliceMod * s);
+                    UV_left.y += (sliceMod * s);
+                    UV_bottom.y += (sliceMod * s);
+                    UV_top.y += (sliceMod * s);
+                    UV_right.y += (sliceMod * s);
+                }
+
+
                 //we generate each slice mesh out of 4 interpolated parts.
                 List<int> tris = new List<int>();
 
@@ -686,8 +734,10 @@ namespace hypercube
 
                 submeshes.Add(tris.ToArray());
 
-                //every face has a separate material/texture   
-                if (!outFlipZ)
+                //every face has a separate material/texture  
+                if (_drawOccludedMode)
+                    faceMaterials[s] = occlusionMaterial; //here it just uses 1 material, but the slices have different uv's if we are in occlusion mode
+                else if (!outFlipZ)
                     faceMaterials[s] = canvasMaterials[s];
                 else
                     faceMaterials[s] = canvasMaterials[slices - s - 1];
@@ -724,8 +774,6 @@ namespace hypercube
             m.normals = normals;
 
 #if HYPERCUBE_DEV
-            if (!calibrator)
-                calibrator = GetComponent<calibrator>();
 
             if (calibrator && calibrator.gameObject.activeSelf && calibrator.enabled)
                 r.materials = calibrator.getMaterials();
