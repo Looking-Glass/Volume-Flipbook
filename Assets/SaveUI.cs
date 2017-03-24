@@ -29,6 +29,9 @@ public class SaveUI : MonoBehaviour
         var editing = flipMaster.flipControls == FlipMaster.FlipControls.Save ||
                       flipMaster.flipControls == FlipMaster.FlipControls.Load;
 
+        //arcade controls erased this all
+         
+        /*
         if (Input.GetKeyDown(KeyCode.S) && !editing)
         {
             flipMaster.SetFlipControls(FlipMaster.FlipControls.Save);
@@ -73,9 +76,10 @@ public class SaveUI : MonoBehaviour
                 flipMaster.RevertControlsToGeneral();
             }
         }
+        */
     }
 
-    void SaveFile(string filename)
+    public void SaveFile(string filename)
     {
         var finalPath = Path.GetFullPath(".");
         finalPath = Path.Combine(finalPath, "Saved");
@@ -116,7 +120,7 @@ public class SaveUI : MonoBehaviour
         print("Saved!");
     }
 
-    void LoadFile(string filename)
+    public void LoadFile(string filename)
     {
         var savedPath = Path.GetFullPath(".");
         savedPath = Path.Combine(savedPath, "Saved");
@@ -128,7 +132,7 @@ public class SaveUI : MonoBehaviour
         savedPath = Path.Combine(savedPath, filename + ".vflip");
         if (!File.Exists(savedPath))
         {
-            print("File not found!");
+            print("File not found! " + savedPath);
             return;
         }
 

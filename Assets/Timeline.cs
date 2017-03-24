@@ -34,11 +34,13 @@ public class Timeline : MonoBehaviour
 
         if (flipMaster.flipControls == FlipMaster.FlipControls.General)
         {
+            /*
             if (Input.GetKeyDown(KeyCode.T))
             {
                 flipMaster.SetFlipControls(FlipMaster.FlipControls.Timeline);
                 dipShow.ForceToggleAnim();
             }
+            */
         }
         else if (flipMaster.flipControls == FlipMaster.FlipControls.Timeline)
         {
@@ -53,19 +55,21 @@ public class Timeline : MonoBehaviour
                     StartCoroutine("SelectorFollowMouse");
                 }
             }
-
+            /*
             if (Input.GetKeyDown(KeyCode.T) || Input.GetKeyDown(KeyCode.Escape))
             {
                 flipMaster.RevertControlsToGeneral();
                 dipShow.ForceToggleAnim();
             }
+            */
         }
-
+        /*
         if (Input.GetMouseButtonUp(0) || Input.GetKeyDown(KeyCode.T) || Input.GetKeyDown(KeyCode.Escape))
         {
             StopCoroutine("SelectorFollowMouse");
             ResetSelector();
         }
+        */
     }
 
     IEnumerator SelectorFollowMouse()

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using hypercube;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class FlipPanel
@@ -103,7 +104,8 @@ public class FlipMaster : MonoBehaviour
         Save,
         Load,
         Timeline,
-        RadialMenu
+        RadialMenu,
+        DemoMode
     }
     public FlipControls flipControls;
     public KeyCode changeSliceForward = KeyCode.RightBracket;
@@ -115,6 +117,23 @@ public class FlipMaster : MonoBehaviour
 
     //Hacky mapping correction
     float correctionRatio = 0.8f;
+
+    //kiosk controls
+    public KeyCode[] arcadeButton =
+    {
+        KeyCode.Alpha1, KeyCode.Alpha2, KeyCode.Alpha3,
+        KeyCode.Q, KeyCode.W, KeyCode.E,
+        KeyCode.A, KeyCode.S, KeyCode.D,
+        KeyCode.Z, KeyCode.X, KeyCode.C,
+
+        KeyCode.Alpha8, KeyCode.Alpha9, KeyCode.Alpha0, 
+        KeyCode.I, KeyCode.O, KeyCode.P, 
+        KeyCode.K, KeyCode.L, KeyCode.Semicolon,
+        KeyCode.Comma, KeyCode.Period, KeyCode.Slash, 
+    };
+    public GameObject cursor;
+    public float timeIdleBeforeDemomode;
+
     #endregion
 
     void Start()
@@ -133,7 +152,7 @@ public class FlipMaster : MonoBehaviour
     {
 
         //Play
-        if (Input.GetKeyDown(KeyCode.Return))
+        if (Input.GetKeyDown(arcadeButton[7]))
         {
             if (flipControls == FlipControls.General || flipControls == FlipControls.Timeline)
             {
@@ -149,11 +168,13 @@ public class FlipMaster : MonoBehaviour
         //Show Menu
         if (flipControls == FlipControls.General || flipControls == FlipControls.RadialMenu)
         {
+            /*
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 mainRadialMenu.ToggleShow();
                 SetFlipControls(mainRadialMenu.showing ? FlipControls.RadialMenu : FlipControls.General);
             }
+            */
         }
 
         if (flipControls == FlipControls.General || flipControls == FlipControls.Timeline)
@@ -161,28 +182,30 @@ public class FlipMaster : MonoBehaviour
             if (flipControls == FlipControls.General)
             {
                 //Change slice controls
-                if (Input.GetKeyDown(changeSliceForward))
+                if (Input.GetKeyDown(arcadeButton[10]))
                     SafeIncrement(ref currentSlice, -1, flipSlices.Count);
-                if (Input.GetKeyDown(changeSliceBack))
+                if (Input.GetKeyDown(arcadeButton[4]))
                     SafeIncrement(ref currentSlice, 1, flipSlices.Count);
             }
 
-            if (Input.GetKeyDown(KeyCode.B))
+            if (Input.GetKeyDown(arcadeButton[5]))
             {
                 print("New blank frame added");
                 var blankFrameHistory = new AddFrameHistory(this, currentFrame + 1, true);
                 historyManager.PerformAndRecord(blankFrameHistory);
             }
 
+            /*
             if (Input.GetKeyDown(KeyCode.C))
             {
                 print("Duplicate frame added");
                 var duplicateFrameHistory = new AddFrameHistory(this, currentFrame + 1, false);
                 historyManager.PerformAndRecord(duplicateFrameHistory);
             }
+            */
 
             //Removal
-            if (Input.GetKeyDown(KeyCode.Delete))
+            if (Input.GetKeyDown(arcadeButton[3]))
             {
                 print("Removed frame");
                 var textures = new Texture2D[flipSliceCount];
@@ -194,14 +217,14 @@ public class FlipMaster : MonoBehaviour
                 historyManager.PerformAndRecord(removeFrameHistory);
             }
 
-            if (Input.GetKeyDown(KeyCode.RightArrow))
+            if (Input.GetKeyDown(arcadeButton[8]))
             {
                 SafeIncrement(ref currentFrame, 1, GetFrameCount());
                 UpdateFrames();
                 print("Moved to frame " + currentFrame);
                 print(GetFrameCount());
             }
-            if (Input.GetKeyDown(KeyCode.LeftArrow))
+            if (Input.GetKeyDown(arcadeButton[6]))
             {
                 SafeIncrement(ref currentFrame, -1, GetFrameCount());
                 UpdateFrames();
@@ -209,6 +232,35 @@ public class FlipMaster : MonoBehaviour
                 print(GetFrameCount());
             }
         }
+
+        if (flipControls == FlipControls.DemoMode)
+        {
+            if (Input.GetKeyDown(arcadeButton[0]))
+            {
+                NewFlipbook();
+                RevertControlsToGeneral();
+                FindObjectOfType<AttractMode>().StopAllCoroutines();
+                cursor.SetActive(true);
+                StartCoroutine(WaitForInput());
+            }
+        }
+    }
+
+    public IEnumerator WaitForInput()
+    {
+        float timer = 0f;
+        while (timer < timeIdleBeforeDemomode)
+        {
+            timer += Time.deltaTime;
+            if (Input.anyKey || Input.GetAxis("Mouse X") != 0 || Input.GetAxis("Mouse Y") != 0)
+            {
+                timer = 0f;
+            }
+            print(timer);
+            yield return new WaitForEndOfFrame();
+        }
+        cursor.SetActive(false);
+        FindObjectOfType<AttractMode>().StartDemoMode();
     }
 
     public void RevertControlsToGeneral()

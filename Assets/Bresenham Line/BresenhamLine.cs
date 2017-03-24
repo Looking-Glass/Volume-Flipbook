@@ -39,7 +39,7 @@ public class BresenhamLine : MonoBehaviour
         xy1 = xy1Sphere.localPosition * tex.width;
         xy2 = xy2Sphere.localPosition * tex.width;
 
-        if (plot || Input.GetKeyDown(KeyCode.A))
+        if (plot)
         {
             var linePoints = MakeLine(xy1, xy2);
             var color = Random.ColorHSV(0f, 1f, 1f, 1f, 1f, 1f);
@@ -51,7 +51,7 @@ public class BresenhamLine : MonoBehaviour
             tex.Apply();
         }
 
-        if (reset || Input.GetKeyDown(KeyCode.R))
+        if (reset)
         {
             Reset();
             reset = false;

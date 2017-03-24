@@ -2,9 +2,6 @@
 
 public class UndoRedoControls : MonoBehaviour
 {
-    public KeyCode undo = KeyCode.Z;
-    public KeyCode redo = KeyCode.Y;
-
     HistoryManager historyManager;
     FlipMaster flipMaster;
 
@@ -18,9 +15,9 @@ public class UndoRedoControls : MonoBehaviour
     {
         if (flipMaster.flipControls == FlipMaster.FlipControls.General)
         {
-            if (Input.GetKeyDown(undo))
+            if (Input.GetKeyDown(flipMaster.arcadeButton[9]))
                 historyManager.Undo();
-            if (Input.GetKeyDown(redo))
+            if (Input.GetKeyDown(flipMaster.arcadeButton[11]))
                 historyManager.Redo();
         }
     }

@@ -161,11 +161,11 @@ public class Drawing : MonoBehaviour
             }
 
             //Change brushes
-            if (Input.GetKeyDown(KeyCode.Alpha1))
+            if (Input.GetKeyDown(flipMaster.arcadeButton[21]))
                 currentBrush = b1;
-            if (Input.GetKeyDown(KeyCode.Alpha2))
+            if (Input.GetKeyDown(flipMaster.arcadeButton[22]))
                 currentBrush = b2;
-            if (Input.GetKeyDown(KeyCode.Alpha3))
+            if (Input.GetKeyDown(flipMaster.arcadeButton[23]))
                 currentBrush = b3;
         }
 
@@ -243,8 +243,7 @@ public class Drawing : MonoBehaviour
                 tex.Apply();
             }
             previousRawMouse = Input.mousePosition;
-
-
+            
 
             yield return new WaitForEndOfFrame();
         }

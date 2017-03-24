@@ -16,6 +16,8 @@ public class Palette : MonoBehaviour
     FlipMaster flipMaster;
     Drawing drawing;
     DipShow dipShow;
+    public Color[] colors;
+    public GameObject cursorFillGameObject;
 
     void Start()
     {
@@ -31,6 +33,7 @@ public class Palette : MonoBehaviour
 
     void Update()
     {
+        /*
         if (Input.GetKeyDown(toggleShowPalette))
         {
             if (flipMaster.flipControls == FlipMaster.FlipControls.Palette)
@@ -43,8 +46,10 @@ public class Palette : MonoBehaviour
             }
             dipShow.ForceToggleAnim();
         }
+        */
         
         //Choose a color
+        /*
         if (flipMaster.flipControls == FlipMaster.FlipControls.Palette)
         {
             if (Input.GetMouseButtonDown(0))
@@ -62,6 +67,18 @@ public class Palette : MonoBehaviour
                     colorCoord = new[] { px, py };
                     SetColorFromCoord();
                 }
+            }
+        }
+        */
+
+        //colors determined by arcade buttons
+        for (int i = 0; i < 9; i++)
+        {
+            if (Input.GetKeyDown(flipMaster.arcadeButton[12 + i]))
+            {
+                currentColor = colors[i];
+                drawing.currentColor = currentColor;
+                cursorFillGameObject.GetComponent<MeshRenderer>().material.color = currentColor;
             }
         }
     }
