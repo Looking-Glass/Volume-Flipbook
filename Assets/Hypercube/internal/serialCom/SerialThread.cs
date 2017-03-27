@@ -63,12 +63,14 @@ public class SerialThread
     public SerialThread(string portName,
                         int baudRate, 
                         int delayBeforeReconnecting,
-                        int maxUnreadMessages)
+                        int maxUnreadMessages,
+                        bool _readDataAsString)
     {
         this.portName = portName;
         this.baudRate = baudRate;
         this.delayBeforeReconnecting = delayBeforeReconnecting;
         this.maxUnreadMessages = maxUnreadMessages;
+        this.readDataAsString = _readDataAsString;
 
         inputQueue = Queue.Synchronized(new Queue());
         outputQueue = Queue.Synchronized(new Queue());
@@ -137,12 +139,19 @@ public class SerialThread
                     while (!IsStopRequested())
                         RunOnce();
                 }
+
+#if !HYPERCUBE_DEV
+                catch 
+                {
+#else
                 catch (Exception ioe)
                 {
                     // A disconnection happened, or there was a problem
                     // reading/writing to the device. Log the detailed message
                     // to the console and notify the listener too.
-                    Debug.LogWarning("Exception: " + ioe.Message + " StackTrace: " + ioe.StackTrace);
+
+                    Debug.LogWarning("Exception: " + ioe.Message + "\nStackTrace: " + ioe.StackTrace);
+#endif
                     inputQueue.Enqueue(SerialController.SERIAL_DEVICE_DISCONNECTED);
 
                     // As I don't know in which stage the SerialPort threw the
@@ -227,7 +236,7 @@ public class SerialThread
             if (outputQueue.Count != 0)
             {
                 string outputMessage = (string)outputQueue.Dequeue();
-                serialPort.WriteLine(outputMessage);
+                serialPort.Write(outputMessage);
             }
 
             // Read a message.
@@ -251,8 +260,8 @@ public class SerialThread
             return;
         }
 
-   //     if (readDataAsString)
-  //          return;
+       if (readDataAsString)
+            return;
 
         //READ DATA AS BYTES
         int byteCount = 0;    
@@ -270,18 +279,19 @@ public class SerialThread
              //but on a side note... what kind of nutcase designs an API that depends on itself crashing and for the dev to catch that exception to know that the api is 'done'.... wtf Ports.IO?!?!?
         }
         if (byteCount > 0 && inputQueue.Count < maxUnreadMessages)
-           // inputQueue.Enqueue(bytesToStr(bytes, byteCount));
+            //inputQueue.Enqueue(bytesToStr(bytes, bytes.Length));
             inputQueue.Enqueue(System.Text.Encoding.Unicode.GetString(bytes));
+
 
     }
 
     //from http://stackoverflow.com/questions/472906/how-to-get-a-consistent-byte-representation-of-strings-in-c-sharp-without-manual
-    //static string bytesToStr(byte[] bytes, int count)
-    //{
-    //    char[] chars = new char[count * sizeof(char)];
-    //    System.Buffer.BlockCopy(bytes, 0, chars, 0, count);
-    //    return new string(chars);
-    //}
+//    static string bytesToStr(byte[] bytes, int count)
+//    {
+//        char[] chars = new char[count * sizeof(char)];
+ //       System.Buffer.BlockCopy(bytes, 0, chars, 0, count);
+ //       return new string(chars);
+ //   }
 
 
 }

@@ -1,0 +1,21 @@
+fileFormatVersion: 2
+guid: c6398baa3aac95c45b2e33ef84a9b807
+timeCreated: 1489856474
+licenseType: Pro
+TrueTypeFontImporter:
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: Questa Sans
+  fontNames:
+  - Questa Sans
+  fallbackFontReferences: []
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

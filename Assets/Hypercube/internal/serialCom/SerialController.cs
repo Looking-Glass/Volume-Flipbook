@@ -1,6 +1,8 @@
 ﻿#if HYPERCUBE_INPUT
 /**
  * Author: Daniel Wilches
+ * 
+ * Modified for Hypercube by dez @ lookingglassfactory.com
  */
 
 using UnityEngine;
@@ -52,6 +54,8 @@ public class SerialController : MonoBehaviour
         }
     }
 
+    public bool isConnected  {get; private set;}
+
     int failures = 0;
 
     // Constants used to mark the start and end of a connection. There is no
@@ -71,6 +75,7 @@ public class SerialController : MonoBehaviour
     void Awake()
     {
         this.enabled = false;
+        isConnected = false;
     }
 
 
@@ -81,8 +86,7 @@ public class SerialController : MonoBehaviour
     // ------------------------------------------------------------------------
     void OnEnable()
     {
-        serialThread = new SerialThread(portName, baudRate, reconnectionDelay, maxUnreadMessages);
-        serialThread.readDataAsString = readDataAsString;
+        serialThread = new SerialThread(portName, baudRate, reconnectionDelay, maxUnreadMessages, readDataAsString);
 
         thread = new Thread(new ThreadStart(serialThread.RunForever));
         thread.Start();
@@ -130,16 +134,19 @@ public class SerialController : MonoBehaviour
 
         if (ReferenceEquals(data, SerialController.SERIAL_DEVICE_CONNECTED))
         {
-            Debug.Log("Connection established to " + portName);
+            hypercube.input._debugLog("<color=#00ff00>Connection established to " + portName + "</color>");
             failures = 0;
+            isConnected = true;
             return null; 
         }
         else if (ReferenceEquals(data, SerialController.SERIAL_DEVICE_DISCONNECTED))
         {
+            isConnected = false;
             failures++;
             if (maxFailuresAllowed > 0 && failures >= maxFailuresAllowed) //shut ourselves down
                 enabled = false;
-            Debug.LogWarning("Connection attempt to Serial failed or disconnection occured on '" + portName + "'. Attempting reconnection");
+
+            hypercube.input._debugLog("<color=orange>Serial connection attempt failed or disconnection occurred on '" + portName + "'.</color>");
             return null;
         }
     
@@ -149,7 +156,11 @@ public class SerialController : MonoBehaviour
 
     public void SendSerialMessage(string message)
     {
-        serialThread.SendSerialMessage(message);
+        if (serialThread != null)
+        {
+            hypercube.input._debugLog("<color=cyan>OUT: " + message + "</color>");
+            serialThread.SendSerialMessage(message);
+        }
     }
 }
 #endif
